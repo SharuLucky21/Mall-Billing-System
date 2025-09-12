@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Orders</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Date</th><th>Cashier</th><th>Total (₹)</th><th>Paid</th><th>Change</th><th>Receipt</th></tr></thead>
+    <tbody>
+      {% for o in orders %}
+      <tr>
+        <td>#{{ o.id }}</td>
+        <td>{{ o.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td>{{ o.cashier.username }}</td>
+        <td>{{ '%.2f'|format(o.total) }}</td>
+        <td>{{ '%.2f'|format(o.paid_cash) }}</td>
+        <td>{{ '%.2f'|format(o.change_due) }}</td>
+        <td><a class="btn-sm" href="{{ url_for('receipt', order_id=o.id) }}" target="_blank">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

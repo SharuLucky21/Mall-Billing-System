@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="card-title m-0">Promo Codes</h5>
+      <a class="btn btn-primary" href="{{ url_for('promocode_new') }}">+ New Promo</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light"><tr><th>Code</th><th>Type</th><th>Value</th><th>Active</th><th>Expires</th><th>Actions</th></tr></thead>
+        <tbody>
+        {% for p in codes %}
+          <tr>
+            <td>{{ p.code }}</td>
+            <td class="text-uppercase">{{ p.discount_type }}</td>
+            <td>{{ '%.0f'|format(p.discount_value) if p.discount_type=='percent' else '%.2f'|format(p.discount_value) }}</td>
+            <td>{{ 'Yes' if p.active else 'No' }}</td>
+            <td>{{ p.expires_at.strftime('%Y-%m-%d') if p.expires_at else '-' }}</td>
+            <td>
+              <form method="post" action="{{ url_for('promocode_toggle', pid=p.id) }}">
+                <button class="btn btn-sm btn-outline-secondary" type="submit">{{ 'Deactivate' if p.active else 'Activate' }}</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

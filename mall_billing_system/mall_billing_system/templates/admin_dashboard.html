@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .chart-col{display:flex;}
+  .chart-card{width:100%;}
+  .chart-wrap{position:relative; width:100%;}
+</style>
+<div class="row g-3 mb-3">
+  <div class="col-md-3">
+    <div class="card text-center shadow-sm">
+      <div class="card-body">
+        <div class="text-muted">Products</div>
+        <div class="display-6">{{ total_products }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center shadow-sm">
+      <div class="card-body">
+        <div class="text-muted">Orders</div>
+        <div class="display-6">{{ total_orders }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center shadow-sm">
+      <div class="card-body">
+        <div class="text-muted">Total Sales (₹)</div>
+        <div class="display-6">{{ '%.2f'|format(total_sales) }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center shadow-sm">
+      <div class="card-body">
+        <div class="text-muted">Low Stock</div>
+        <div class="display-6">{{ low_stock_count }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-4 chart-col">
+    <div class="card shadow-sm chart-card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="card-title mb-0">Sales Trend</h6>
+          <select id="range" class="form-select form-select-sm" style="width:auto" onchange="loadSales()">
+            <option value="daily">7 days</option>
+            <option value="weekly">12 weeks</option>
+            <option value="monthly">12 months</option>
+          </select>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="salesChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4 chart-col">
+    <div class="card shadow-sm chart-card">
+      <div class="card-body">
+        <h6 class="card-title mb-2">Revenue</h6>
+        <div class="chart-wrap">
+          <canvas id="revenueChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4 chart-col">
+    <div class="card shadow-sm chart-card">
+      <div class="card-body">
+        <h6 class="card-title mb-2 text-center">Payment Methods</h6>
+        <div class="chart-wrap">
+          <canvas id="paymentPie"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <h5 class="card-title">Quick Actions</h5>
+    <div class="d-flex gap-2 flex-wrap">
+      <a class="btn btn-primary" href="{{ url_for('products_list') }}">Manage Products</a>
+      <a class="btn btn-secondary" href="{{ url_for('orders_list') }}">View Orders</a>
+      <a class="btn btn-outline-primary" href="{{ url_for('promocodes_list') }}">Manage Promo Codes</a>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  let salesChart, revenueChart, paymentPie;
+  async function loadSales(){
+    const range = document.getElementById('range').value;
+    const res = await fetch(`{{ url_for('admin_sales_summary') }}?range=${range}`);
+    const json = await res.json();
+    const labels = json.series.map(s => s.label || s.date);
+    const totals = json.series.map(s => s.total);
+    const orders = json.series.map(s => s.orders);
+    const sctx = document.getElementById('salesChart');
+    if(salesChart) salesChart.destroy();
+    salesChart = new Chart(sctx, {
+      type: 'line',
+      data: { labels, datasets: [
+        { label: 'Sales (₹)', data: totals, borderColor: '#198754', backgroundColor: 'rgba(25,135,84,0.1)', tension: .3 },
+        { label: 'Orders', data: orders, yAxisID: 'y1', borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,0.1)', tension: .3 }
+      ]},
+      options: { maintainAspectRatio: true, aspectRatio: 1.2, scales: { y: { beginAtZero: true }, y1: { beginAtZero: true, position: 'right' } } }
+    });
+    const rctx = document.getElementById('revenueChart');
+    if(revenueChart) revenueChart.destroy();
+    revenueChart = new Chart(rctx, {
+      type: 'bar',
+      data: { labels, datasets: [
+        { label: 'Revenue (₹)', data: totals, backgroundColor: 'rgba(13,110,253,0.5)', borderColor: '#0d6efd' }
+      ]},
+      options: { maintainAspectRatio: true, aspectRatio: 1.2, scales: { y: { beginAtZero: true } } }
+    });
+  }
+  loadSales();
+  (function(){
+    const ctx = document.getElementById('paymentPie');
+    const data = {
+      labels: ['Cash','Card','UPI','Wallet'],
+      datasets: [{
+        data: [{{ cash_count }}, {{ card_count }}, {{ upi_count }}, {{ wallet_count }}],
+        backgroundColor: ['#6c757d','#0d6efd','#20c997','#ffc107']
+      }]
+    };
+    paymentPie = new Chart(ctx, { type: 'pie', data, options: { maintainAspectRatio: true, aspectRatio: 1.2 } });
+  })();
+</script>
+{% endblock %}

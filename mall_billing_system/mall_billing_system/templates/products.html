@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="card-title m-0">Products</h5>
+      <div class="d-flex gap-2">
+        <form method="post" action="{{ url_for('update_product_images') }}" class="d-inline">
+          <button class="btn btn-outline-success" type="submit" onclick="return confirm('Update all products with images?')">Add Images</button>
+        </form>
+        <a class="btn btn-primary" href="{{ url_for('product_new') }}">+ New Product</a>
+      </div>
+    </div>
+    <form class="row g-2 mb-3" method="get">
+      <div class="col-sm-10">
+        <input name="q" class="form-control" placeholder="Search by name or barcode" value="{{ q }}">
+      </div>
+      <div class="col-sm-2 d-grid">
+        <button class="btn btn-outline-secondary" type="submit">Search</button>
+      </div>
+    </form>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+      {% for p in products %}
+      <div class="col">
+        <div class="card h-100">
+          {% if p.image_url %}
+          <img src="{{ p.image_url }}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="{{ p.name }}">
+          {% endif %}
+          <div class="card-body d-flex flex-column">
+            <h6 class="card-title mb-1">{{ p.name }}</h6>
+            <div class="text-muted small">Barcode: {{ p.barcode }}</div>
+            <div class="mt-2">Price: ₹ {{ '%.2f'|format(p.price) }}</div>
+            <div class="mb-3">Stock: {{ p.stock }}</div>
+            <div class="mt-auto d-flex gap-2">
+              <a class="btn btn-sm btn-secondary" href="{{ url_for('product_edit', pid=p.id) }}">Edit</a>
+              <form class="d-inline" method="post" action="{{ url_for('product_delete', pid=p.id) }}" onsubmit="return confirm('Delete this product?');">
+                <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
